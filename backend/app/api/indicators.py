@@ -1,0 +1,48 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.core.database import SessionLocal
+from app.models.indicator import Indicator
+from app.schemas.indicator import IndicatorCreate, IndicatorResponse
+
+
+router = APIRouter(
+    prefix="/indicators",
+    tags=["Indicators"]
+)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@router.post("/", response_model=IndicatorResponse)
+def create_indicator(
+    indicator_data: IndicatorCreate,
+    db: Session = Depends(get_db)
+):
+    new_indicator = Indicator(
+        indicator=indicator_data.indicator,
+        indicator_type=indicator_data.indicator_type,
+        source=indicator_data.source,
+        threat_type=indicator_data.threat_type,
+        confidence=indicator_data.confidence,
+        description=indicator_data.description,
+        first_seen=indicator_data.first_seen,
+        last_seen=indicator_data.last_seen
+    )
+
+    db.add(new_indicator)
+    db.commit()
+    db.refresh(new_indicator)
+
+    return new_indicator
+
+
+@router.get("/", response_model=list[IndicatorResponse])
+def get_indicators(db: Session = Depends(get_db)):
+    return db.query(Indicator).all()
