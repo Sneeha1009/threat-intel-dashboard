@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
@@ -46,3 +46,21 @@ def create_indicator(
 @router.get("/", response_model=list[IndicatorResponse])
 def get_indicators(db: Session = Depends(get_db)):
     return db.query(Indicator).all()
+
+
+@router.get("/{indicator_id}", response_model=IndicatorResponse)
+def get_indicator(
+    indicator_id: int,
+    db: Session = Depends(get_db)
+):
+    indicator = db.query(Indicator).filter(
+        Indicator.id == indicator_id
+    ).first()
+
+    if indicator is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Indicator not found"
+        )
+
+    return indicator
