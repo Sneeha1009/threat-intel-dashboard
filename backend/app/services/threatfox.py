@@ -1,6 +1,12 @@
+import os
+
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 THREATFOX_URL = "https://threatfox-api.abuse.ch/api/v1/"
+THREATFOX_API_KEY = os.getenv("THREATFOX_API_KEY")
 
 
 async def get_recent_indicators():
@@ -10,6 +16,7 @@ async def get_recent_indicators():
     }
 
     headers = {
+        "Auth-Key": THREATFOX_API_KEY,
         "User-Agent": "Threat-Intelligence-Dashboard/1.0"
     }
 
