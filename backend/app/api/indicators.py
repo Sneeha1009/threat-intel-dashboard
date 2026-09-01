@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.indicator import Indicator
 from app.schemas.indicator import IndicatorCreate, IndicatorResponse
+from app.services.threatfox import get_recent_indicators
 
 
 router = APIRouter(
@@ -20,6 +21,7 @@ def get_db():
         db.close()
 
 
+# Create an indicator
 @router.post("/", response_model=IndicatorResponse)
 def create_indicator(
     indicator_data: IndicatorCreate,
@@ -43,11 +45,26 @@ def create_indicator(
     return new_indicator
 
 
+# Get all indicators
 @router.get("/", response_model=list[IndicatorResponse])
 def get_indicators(db: Session = Depends(get_db)):
     return db.query(Indicator).all()
 
 
+# Get recent indicators from ThreatFox
+@router.get("/threatfox")
+async def fetch_threatfox_indicators():
+    try:
+        data = await get_recent_indicators()
+        return data
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch ThreatFox data: {str(e)}"
+        )
+
+
+# Get one indicator by ID
 @router.get("/{indicator_id}", response_model=IndicatorResponse)
 def get_indicator(
     indicator_id: int,
